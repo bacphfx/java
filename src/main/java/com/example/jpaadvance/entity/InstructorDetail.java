@@ -7,7 +7,7 @@ import jakarta.persistence.*;
 public class InstructorDetail {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "io")
+    @Column(name = "id")
     private int id;
 
     @Column(name = "youtube_channel")

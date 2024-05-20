@@ -20,4 +20,17 @@ public class AppDAOImpl implements AppDAO {
     public void save(Instructor theInstructor) {
         entityManager.persist(theInstructor);
     }
+
+    @Override
+    public Instructor findInstructorByID(int id) {
+        return entityManager.find(Instructor.class, id);
+    }
+
+    @Override
+    @Transactional
+    public void deleteInstructorById(int id) {
+        Instructor tempInstructor = entityManager.find(Instructor.class, id);
+
+        entityManager.remove(tempInstructor);
+    }
 }

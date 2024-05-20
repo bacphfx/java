@@ -4,4 +4,8 @@ import com.example.jpaadvance.entity.Instructor;
 
 public interface AppDAO {
     void save(Instructor theInstructor);
+
+    Instructor findInstructorByID(int theId);
+
+    void deleteInstructorById(int id);
 }
