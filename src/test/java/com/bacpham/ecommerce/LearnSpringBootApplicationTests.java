@@ -1,4 +1,4 @@
-package com.bacpham.learnspringboot;
+package com.bacpham.ecommerce;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
