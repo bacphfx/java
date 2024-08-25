@@ -29,8 +29,26 @@ public class OrderDetailController {
         }
     }
 
-    @GetMapping("/${id}")
+    @GetMapping("/{id}")
     public ResponseEntity<?> getOrderDetail(@Valid @PathVariable Long id){
         return ResponseEntity.ok("Get order detail with id: " + id);
+    }
+
+    @GetMapping("/order/{id}")
+    public ResponseEntity<?> getOrderDetails(@Valid @PathVariable Long id){
+        return ResponseEntity.ok("Get order detail with order id: " + id);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateOrderDetail(@Valid @PathVariable Long id,
+                                               @RequestBody OrderDetailDTO orderDetailDTO){
+
+        return ResponseEntity.ok("Update order detail with id: " + id
+        + ", new Order detail data: " + orderDetailDTO);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteOrderDetail(@Valid @PathVariable Long id){
+        return ResponseEntity.ok("Delete order detail with id: " + id);
     }
 }
