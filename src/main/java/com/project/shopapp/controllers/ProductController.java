@@ -1,6 +1,8 @@
 package com.project.shopapp.controllers;
 
 import com.project.shopapp.dtos.ProductDTO;
+import com.project.shopapp.services.ProductService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -21,7 +23,9 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("${api.prefix}/products")
+@RequiredArgsConstructor
 public class ProductController {
+    private final ProductService productService;
     @GetMapping("")
     public ResponseEntity<String> getAllProducts(@RequestParam int page,
                                                  @RequestParam int limit) {
@@ -60,7 +64,7 @@ public class ProductController {
                 }
                 String filename = storeFile(file);
             }
-
+            productService.createProduct(productDTO);
             return ResponseEntity.ok("Product created successfully");
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
