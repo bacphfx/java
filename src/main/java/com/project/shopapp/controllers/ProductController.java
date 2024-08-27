@@ -1,7 +1,11 @@
 package com.project.shopapp.controllers;
 
 import com.project.shopapp.dtos.ProductDTO;
+import com.project.shopapp.dtos.ProductImageDTO;
+import com.project.shopapp.models.Product;
+import com.project.shopapp.models.ProductImage;
 import com.project.shopapp.services.ProductService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -26,6 +30,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ProductController {
     private final ProductService productService;
+
     @GetMapping("")
     public ResponseEntity<String> getAllProducts(@RequestParam int page,
                                                  @RequestParam int limit) {
@@ -37,8 +42,9 @@ public class ProductController {
         return ResponseEntity.ok("Product with id: " + id);
     }
 
-    @PostMapping(value = "", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<?> createProduct(@ModelAttribute ProductDTO productDTO,
+    @PostMapping("")
+    public ResponseEntity<?> createProduct(@Valid @RequestBody ProductDTO productDTO,
+
                                            BindingResult result
     ) {
         try {
@@ -49,10 +55,26 @@ public class ProductController {
                         .toList();
                 return ResponseEntity.badRequest().body(errorMessages);
             }
-            List<MultipartFile> files = productDTO.getFiles();
+            Product newProduct = productService.createProduct(productDTO);
+
+            return ResponseEntity.ok(newProduct);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PostMapping(value = "/uploads/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> uploadImages(@ModelAttribute("files") List<MultipartFile> files,
+                                          @PathVariable long id) {
+        try {
+            Product existingProduct = productService.getProductById(id);
             files = files == null ? new ArrayList<MultipartFile>() : files;
+            if (files.size()> ProductImage.MAXIMUM_IMAGES_PER_PRODUCT){
+                return ResponseEntity.badRequest().body("You can upload maximum 5 images");
+            }
+            List<ProductImage> productImageList = new ArrayList<>();
             for (MultipartFile file : files) {
-                if(file.getSize() == 0) continue;
+                if (file.getSize() == 0) continue;
                 if (file.getSize() > 10 * 1024 * 1024) {
                     return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE)
                             .body("File is too large");
@@ -63,15 +85,23 @@ public class ProductController {
                             .body("File must be an image");
                 }
                 String filename = storeFile(file);
+                ProductImage productImage = productService.createProductImage(existingProduct.getId(),
+                        ProductImageDTO.builder()
+                                .imageUrl(filename)
+                                .build());
+                productImageList.add(productImage);
             }
-            productService.createProduct(productDTO);
-            return ResponseEntity.ok("Product created successfully");
+            return ResponseEntity.ok().body(productImageList);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
+
     }
 
     private String storeFile(MultipartFile file) throws IOException {
+        if(!isImageFile(file) || file.getOriginalFilename() == null){
+            throw new IOException("Invalid image format");
+        }
         String filename = StringUtils.cleanPath(file.getOriginalFilename());
         String uniqueFilename = UUID.randomUUID().toString() + "_" + filename;
         Path uploadDir = Paths.get("uploads");
@@ -81,5 +111,10 @@ public class ProductController {
         Path destination = Paths.get(uploadDir.toString(), uniqueFilename);
         Files.copy(file.getInputStream(), destination, StandardCopyOption.REPLACE_EXISTING);
         return uniqueFilename;
+    }
+
+    private boolean isImageFile(MultipartFile file){
+        String contentType = file.getContentType();
+        return contentType != null && contentType.startsWith("image/");
     }
 }

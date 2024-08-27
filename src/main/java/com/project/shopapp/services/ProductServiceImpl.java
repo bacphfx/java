@@ -3,10 +3,12 @@ package com.project.shopapp.services;
 import com.project.shopapp.dtos.ProductDTO;
 import com.project.shopapp.dtos.ProductImageDTO;
 import com.project.shopapp.exceptions.DataNotFoundException;
+import com.project.shopapp.exceptions.InvalidParamException;
 import com.project.shopapp.models.Category;
 import com.project.shopapp.models.Product;
 import com.project.shopapp.models.ProductImage;
 import com.project.shopapp.repositories.CategoryRepository;
+import com.project.shopapp.repositories.ProductImageRepository;
 import com.project.shopapp.repositories.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -20,6 +22,7 @@ import java.util.Optional;
 public class ProductServiceImpl implements ProductService {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
+    private final ProductImageRepository productImageRepository;
 
     @Override
     public Product createProduct(ProductDTO productDTO) throws DataNotFoundException {
@@ -76,9 +79,19 @@ public class ProductServiceImpl implements ProductService {
         return productRepository.existsByName(name);
     }
 
-    private ProductImage createProductImage(Long id, ProductImageDTO productImageDTO) throws Exception {
+    @Override
+    public ProductImage createProductImage(Long id, ProductImageDTO productImageDTO) throws Exception {
         Product existingProduct = productRepository.findById(id)
-                .orElseThrow(()-> new DataNotFoundException("Product not found with id: " + id));
-        return null;
+                .orElseThrow(() -> new DataNotFoundException("Product not found with id: "
+                        + id));
+        ProductImage newProductImage = ProductImage.builder()
+                .product(existingProduct)
+                .imageUrl(productImageDTO.getImageUrl())
+                .build();
+        int size = productImageRepository.findByProductId(id).size();
+        if (size >= ProductImage.MAXIMUM_IMAGES_PER_PRODUCT) {
+            throw new InvalidParamException("Number of image must be <= " + ProductImage.MAXIMUM_IMAGES_PER_PRODUCT);
+        }
+        return productImageRepository.save(newProductImage);
     }
 }
