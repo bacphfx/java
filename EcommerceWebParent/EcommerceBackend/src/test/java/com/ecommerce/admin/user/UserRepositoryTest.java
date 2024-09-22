@@ -7,6 +7,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.annotation.Rollback;
 
 import java.util.List;
@@ -79,5 +82,50 @@ public class UserRepositoryTest {
     @Test
     public void testDeleteUser(){
         userRepository.deleteById(2);
+    }
+
+    @Test
+    public void testGetUserByEmail(){
+        String email = "bacph18@gmail.com";
+        User user = userRepository.getByEmail(email);
+        assertThat(user).isNotNull();
+    }
+
+    @Test
+    public void testCountById(){
+        Integer id = 1;
+        Long count = userRepository.countById(id);
+
+        assertThat(count).isNotNull().isGreaterThan(0);
+    }
+
+    @Test
+    public void  testDisableUser(){
+        Integer id = 1;
+        userRepository.updateEnabledStatus(id, true);
+    }
+
+    @Test
+    public void testListFirstPage(){
+        int pageNumber = 0;
+        int pageSize =4;
+        Pageable pageable = PageRequest.of(pageNumber, pageSize);
+        Page<User> page = userRepository.findAll(pageable);
+        List<User> users = page.getContent();
+        users.forEach(System.out::println);
+        assertThat(users.size()).isEqualTo(4);
+    }
+
+    @Test
+    public void testSearchUser(){
+        String keyword = "Bruce";
+        int pageNumber = 0;
+        int pageSize =4;
+        Pageable pageable = PageRequest.of(pageNumber, pageSize);
+        Page<User> page = userRepository.findAll(keyword,pageable);
+        List<User> users = page.getContent();
+
+        users.forEach(System.out::println);
+        assertThat(users.size()).isGreaterThan(0);
     }
 }
